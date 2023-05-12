@@ -29,4 +29,30 @@ export const authOption: NextAuthOptions = {
       clientSecret: getGoogleCredentials().clientSecret,
     }),
   ],
+  callbacks: {
+    async jwt({ token, user }) {
+      const dbuser = (await db.get(`user:${token.id}`)) as User | null;
+      if (!dbuser) {
+        token.id = user!.id;
+      }
+      return {
+        id: dbuser?.id,
+        name: dbuser?.email,
+        email: dbuser?.email,
+        picture: dbuser?.image,
+      };
+    },
+    async session({ session, token }) {
+      if (token.id) {
+        session.user.id = token.id;
+        session.user.name = token.name;
+        session.user.email = token.email;
+        session.user.image = token.picture;
+      }
+      return session;
+    },
+    redirect() {
+      return "/dashboard";
+    },
+  },
 };
